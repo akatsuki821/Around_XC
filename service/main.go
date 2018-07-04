@@ -172,7 +172,7 @@ func handlerSearch(w http.ResponseWriter, r *http.Request) {
 func containsFilteredWords (s *string) bool {
 	filteredWords := []string{
 		"fuck",
-		"nigger",
+		"damn",
 	}
 	for _, word := range filteredWords {
 		if strings.Contains(*s, word) {

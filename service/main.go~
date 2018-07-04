@@ -3,6 +3,7 @@ package main
 import (
 	elastic "gopkg.in/olivere/elastic.v3"
 	"fmt"
+	"strings"
 	"strconv"
 	"net/http"
 	"encoding/json"
