@@ -13,6 +13,7 @@ import (
 	"github.com/pborman/uuid"
     "context"
     "cloud.google.com/go/storage"
+    "cloud.google.com/go/bigtable"
     "github.com/auth0/go-jwt-middleware"
     "github.com/dgrijalva/jwt-go"
     "github.com/gorilla/mux"
@@ -24,7 +25,7 @@ const (
 	DISTANCE = "200km"
 	PROJECT_ID = "aroundxc-209205"
 	BT_INSTANCE = "around-post"
-	ES_URL = "http://35.196.146.20:9200"
+	ES_URL = "http://104.196.99.111:9200"
     BUCKET_NAME = "post-images-209205"
 )
 
@@ -143,6 +144,28 @@ func handlerPost(w http.ResponseWriter, r *http.Request) {
     
     //Save to BigTable
     //saveToBigTable(p, id)
+    ctx = context.Background()
+    bt_client, err := bigtable.NewClient(ctx, PROJECT_ID, BT_INSTANCE)
+    if err != nil {
+        panic(err)
+        return
+    }
+    
+    tbl := bt_client.Open("post")
+    mut := bigtable.NewMutation()
+    t := bigtable.Now()
+    
+    mut.Set("post", "user", t, []byte(p.User))
+    mut.Set("post", "message", t, []byte(p.Message))
+    mut.Set("location", "lat", t, []byte(strconv.FormatFloat(p.Location.Lat, 'f', -1, 64)))
+    mut.Set("location", "lon", t, []byte(strconv.FormatFloat(p.Location.Lon, 'f', -1, 64)))
+    
+    err = tbl.Apply(ctx, id, mut)
+    if err != nil {
+        panic(err)
+        return
+    }
+    fmt.Printf("Post is save to BigTable: %s\n", p.Message)
 }
 
 func saveToGCS(ctx context.Context, r io.Reader, bucketName, name string) (*storage.ObjectHandle, *storage.ObjectAttrs, error) {
